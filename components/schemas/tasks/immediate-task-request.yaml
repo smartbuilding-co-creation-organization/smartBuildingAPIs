@@ -1,0 +1,15 @@
+allOf:
+  - $ref: './task-base.yaml'
+  - type: object
+    properties:
+      siteId:
+        type: string
+        description: 対象サイトID（`buildingId` といずれか一方を指定）
+      buildingId:
+        type: string
+        description: 対象建物ID（`siteId` といずれか一方を指定）
+    oneOf:
+      - required:
+          - siteId
+      - required:
+          - buildingId

@@ -1,0 +1,14 @@
+description: サーバー内部エラー
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: INTERNAL_ERROR
+      message: サーバー内部エラーが発生しました
+      timestamp: '2026-04-01T10:30:00Z'

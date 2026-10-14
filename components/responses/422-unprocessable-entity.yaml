@@ -1,0 +1,12 @@
+description: Idempotency-Key が過去リクエストと整合しないため処理できません
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: IDEMPOTENCY_KEY_PAYLOAD_MISMATCH
+      message: 同一の Idempotency-Key に対して異なるリクエスト内容は送信できません
+      details:
+        - field: Idempotency-Key
+          issue: 同一キーで異なるペイロードが指定されました
+      timestamp: '2026-06-02T10:30:00Z'

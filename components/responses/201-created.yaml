@@ -1,0 +1,14 @@
+description: リソースが正常に作成されました
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: リソースが作成されました

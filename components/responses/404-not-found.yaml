@@ -1,0 +1,14 @@
+description: リソースが見つかりません
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: NOT_FOUND
+      message: 指定されたリソースが見つかりません
+      timestamp: '2026-04-01T10:30:00Z'

@@ -1,0 +1,32 @@
+summary: OIDC Discovery応答例
+value:
+  issuer: https://auth.example.com
+  authorization_endpoint: https://auth.example.com/authorize
+  token_endpoint: https://auth.example.com/token
+  revocation_endpoint: https://auth.example.com/revoke
+  jwks_uri: https://auth.example.com/.well-known/jwks.json
+  scopes_supported:
+    - openid
+    - profile
+    - digital-twins:read
+    - digital-twins:write
+    - devices:read
+    - devices:control
+    - tasks:read
+    - tasks:write
+    - log:read
+  response_types_supported:
+    - code
+  grant_types_supported:
+    - authorization_code
+    - client_credentials
+    - refresh_token
+  subject_types_supported:
+    - public
+  id_token_signing_alg_values_supported:
+    - RS256
+  token_endpoint_auth_methods_supported:
+    - client_secret_basic
+    - client_secret_post
+  code_challenge_methods_supported:
+    - S256

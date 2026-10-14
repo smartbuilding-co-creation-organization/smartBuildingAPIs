@@ -1,0 +1,62 @@
+post:
+  summary: リソース検索
+  description: |
+    指定されたビルディング内のリソース情報を複雑な条件で検索します。
+    論理演算や複数フィールド条件を組み合わせる場合は本エンドポイントを利用してください。
+  operationId: searchResourcesAdvanced
+  tags:
+    - Resources
+  security:
+    - OIDC: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/resources/search-request.yaml#/ResourceSearchRequest'
+        examples:
+          simple_status:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/simple_status'
+          simple_customTags_or:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/simple_customTags_or'
+          simple_customTags_and:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/simple_customTags_and'
+          simple_customTags_xor:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/simple_customTags_xor'
+          simple_customTags_nor:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/simple_customTags_nor'
+          simple_customTags_nand:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/simple_customTags_nand'
+          advanced_and:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/advanced_and'
+          advanced_or:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/advanced_or'
+          advanced_nested:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/advanced_nested'
+          advanced_custom_property:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/advanced_custom_property'
+          advanced_complex:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/advanced_complex'
+          advanced_customTags_nand_in_filter:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/advanced_customTags_nand_in_filter'
+          advanced_customTags_nor_in_filter:
+            $ref: './list.yaml#/post/requestBody/content/application~1json/examples/advanced_customTags_nor_in_filter'
+  responses:
+    '200':
+      description: 検索成功
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/resources/search-response.yaml'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

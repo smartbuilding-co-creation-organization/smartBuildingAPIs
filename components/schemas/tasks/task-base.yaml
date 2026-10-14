@@ -1,0 +1,35 @@
+type: object
+required:
+  - execType
+  - startDatetime
+  - endDatetime
+  - pointIds
+properties:
+  execType:
+    type: string
+    enum: [immediate]
+    description: |-
+      タスク実行タイプ
+      - `immediate`: 即時実行
+    example: immediate
+  startDatetime:
+    type: string
+    format: date-time
+    description: データ集計開始日
+    example: '2026-03-01T00:00:00Z'
+  endDatetime:
+    type: string
+    format: date-time
+    description: データ集計終了日
+    example: '2026-03-31T23:59:59Z'
+  pointIds:
+    type: array
+    description: |-
+      収集対象の監視点ID
+      ★標準として一度に最低xポイント以上指定できること等の基準が必要か。
+    items:
+      type: string
+      description: 監視点ID
+    example:
+      - '1234567890'
+      - '1234567891'

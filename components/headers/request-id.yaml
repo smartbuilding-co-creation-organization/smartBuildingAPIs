@@ -1,0 +1,4 @@
+description: トレース・デバッグ用のリクエスト識別子
+schema:
+  type: string
+  example: req-123e4567-e89b-12d3-a456-426614174000

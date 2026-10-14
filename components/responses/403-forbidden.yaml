@@ -1,0 +1,14 @@
+description: アクセス権限がありません
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: FORBIDDEN
+      message: このリソースへのアクセス権限がありません
+      timestamp: '2024-01-15T10:30:00Z'

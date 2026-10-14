@@ -1,0 +1,152 @@
+openapi: 3.0.0
+info:
+  title: スマートビル標準API
+  description: デジタルツイン、デバイステレメトリ、デバイス制御、データ集計タスクを管理するAPI
+  version: 0.1.0
+  contact:
+    name: SBCO標準化WG
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://api.example.com/v1
+    description: 本番環境
+  - url: https://api-staging.example.com/v1
+    description: ステージング環境
+  - url: http://localhost:3000/v1
+    description: ローカル開発環境
+
+tags:
+  - name: Authentication
+    description: |
+      OAuth 2.0 / OpenID Connect (OIDC) による認証・認可。
+      各ビルOSベンダーはOIDC準拠の認可サーバーを提供し、
+      クライアントアプリケーションはOIDC Discoveryを通じて認証設定を自動取得する。
+  - name: Resources
+    description: リソースの管理・操作
+  - name: Device Telemetry
+    description: デバイスからのテレメトリデータ取得
+  - name: Device Control
+    description: デバイスの遠隔制御
+  - name: Tasks
+    description: データ集計タスクの管理
+
+# 以下paths、componentsは前述の通り
+paths:
+  # 認証（OIDC Discovery）
+  /.well-known/openid-configuration:
+    $ref: './paths/auth/openid-configuration.yaml'
+
+  # デジタルツイン
+  /resources/search:
+    $ref: './paths/resources/search.yaml'
+  /resources/{resourceId}:
+    $ref: './paths/resources/update.yaml'
+
+  # デバイス
+  /points/state:
+    $ref: './paths/points/state.yaml'
+  /points/command:
+    $ref: './paths/points/command.yaml'
+
+  # タスク
+  /tasks/point-data:
+    $ref: './paths/tasks/immediate.yaml'
+  /tasks/point-data/{taskId}:
+    $ref: './paths/tasks/by-id.yaml'
+
+components:
+  securitySchemes:
+    OIDC:
+      $ref: './components/security-schemes/oidc.yaml'
+
+  schemas:
+    # 共通スキーマ
+    Error:
+      $ref: './components/schemas/common/error.yaml'
+    Pagination:
+      $ref: './components/schemas/common/pagination.yaml'
+    
+    # 認証
+    OpenIdConfiguration:
+      $ref: './components/schemas/auth/openid-configuration.yaml'
+    RecommendedClaims:
+      $ref: './components/schemas/auth/recommended-claims.yaml'
+    
+    # デジタルツイン
+    Resource:
+      $ref: './components/schemas/resources/resource.yaml'
+    ResourceUpdateRequest:
+      $ref: './components/schemas/resources/resource-update-request.yaml'
+    ResourceSearchRequest:
+      $ref: './components/schemas/resources/search-request.yaml#/ResourceSearchRequest'
+    ResourceSearchResponse:
+      $ref: './components/schemas/resources/search-response.yaml'
+    
+    # タスク
+    Task:
+      $ref: './components/schemas/tasks/task.yaml'
+    TaskBase:
+      $ref: './components/schemas/tasks/task-base.yaml'
+    ImmediateTaskRequest:
+      $ref: './components/schemas/tasks/immediate-task-request.yaml'
+    ImmediateTaskResponse:
+      $ref: './components/schemas/tasks/immediate-task-response.yaml'
+  parameters:
+    # 共通パラメータ
+    Topology:
+      $ref: './components/parameters/common/path.yaml'
+    Filter:
+      $ref: './components/parameters/common/filter.yaml'
+    Details:
+      $ref: './components/parameters/common/details.yaml'
+    Children:
+      $ref: './components/parameters/common/children.yaml'
+    IdempotencyKey:
+      $ref: './components/parameters/common/idempotency-key.yaml'
+    
+    # タスクパラメータ
+    TaskId:
+      $ref: './components/parameters/tasks/task-id.yaml'
+
+  responses:
+    # 成功系
+    Success:
+      $ref: './components/responses/200-success.yaml'
+    Created:
+      $ref: './components/responses/201-created.yaml'
+    Accepted:
+      $ref: './components/responses/202-accepted.yaml'
+    NoContent:
+      $ref: './components/responses/204-no-content.yaml'
+    
+    # クライアントエラー
+    BadRequest:
+      $ref: './components/responses/400-bad-request.yaml'
+    Unauthorized:
+      $ref: './components/responses/401-unauthorized.yaml'
+    Forbidden:
+      $ref: './components/responses/403-forbidden.yaml'
+    NotFound:
+      $ref: './components/responses/404-not-found.yaml'
+    Conflict:
+      $ref: './components/responses/409-conflict.yaml'
+    IdempotencyConflict:
+      $ref: './components/responses/409-idempotency-conflict.yaml'
+    UnprocessableEntity:
+      $ref: './components/responses/422-unprocessable-entity.yaml'
+    TooManyRequests:
+      $ref: './components/responses/429-too-many-requests.yaml'
+    
+    # サーバーエラー
+    InternalError:
+      $ref: './components/responses/500-internal-error.yaml'
+    BadGateway:
+      $ref: './components/responses/502-bad-gateway.yaml'
+    ServiceUnavailable:
+      $ref: './components/responses/503-service-unavailable.yaml'
+
+security:
+  - OIDC: []

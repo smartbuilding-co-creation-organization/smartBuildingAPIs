@@ -1,0 +1,282 @@
+type: oauth2
+description: |
+  OAuth 2.0 / OpenID Connect (OIDC) による認証・認可
+
+  ## 概要
+
+  スマートビル標準APIでは、OAuth 2.0をベースとした認証・認可を採用する。
+  各ビルOSベンダーは、OIDC準拠の認可サーバーを提供し、
+  クライアントアプリケーションはOIDC Discoveryを通じて認証設定を自動取得する。
+
+  ## OIDC Discovery（必須）
+
+  各ベンダーは以下のエンドポイントを認可サーバー上に提供すること：
+  ```
+  GET https://{認可サーバー}/.well-known/openid-configuration
+  ```
+  クライアントはこのエンドポイントから、認可エンドポイント・トークンエンドポイント等のURLを取得する。
+
+  ## 対応フロー
+
+  - **Authorization Code + PKCE**: ユーザー操作を伴うWebアプリケーション・モバイルアプリ向け
+  - **Client Credentials**: システム間連携（M2M）・IoTデバイス連携向け
+  - **Refresh Token**: アクセストークンの更新
+  - **Token Revocation**: トークンの失効（緊急時のアクセス取り消し）
+
+  ## 1. Authorization Code + PKCE フロー
+
+  ユーザーがブラウザ等で操作するアプリケーション向け。
+  セキュリティ強化のため、PKCE（RFC 7636）の使用を必須とする（チャレンジ方式: S256）。
+
+  ### Step 1: 認可リクエスト
+
+  ユーザーをブラウザで認可エンドポイントへリダイレクトする。
+
+  ```
+  GET https://auth.example.com/authorize
+    ?response_type=code
+    &client_id=my-dashboard-app
+    &redirect_uri=https://dashboard.example.com/callback
+    &scope=openid profile devices:read devices:control
+    &state=random-state-value
+    &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+    &code_challenge_method=S256
+  ```
+
+  | パラメータ | 説明 |
+  |---|---|
+  | `response_type` | `code` を指定（固定） |
+  | `client_id` | 事前にベンダーから発行されたクライアントID |
+  | `redirect_uri` | 認可後のリダイレクト先URL |
+  | `scope` | 要求するスコープ（スペース区切り） |
+  | `state` | CSRF対策のランダム値 |
+  | `code_challenge` | PKCEチャレンジ値（code_verifierのSHA256ハッシュ、Base64URL） |
+  | `code_challenge_method` | `S256` を指定（固定） |
+
+  ### Step 2: 認可コードの受け取り
+
+  ユーザーが認証・認可すると、認可サーバーがリダイレクトURIに認可コードを付与する。
+
+  ```
+  GET https://dashboard.example.com/callback
+    ?code=authorization-code-value
+    &state=random-state-value
+  ```
+
+  ### Step 3: トークンリクエスト
+
+  認可コードをアクセストークンに交換する。
+
+  ```bash
+  curl -X POST https://auth.example.com/token \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "grant_type=authorization_code" \
+    -d "code=authorization-code-value" \
+    -d "redirect_uri=https://dashboard.example.com/callback" \
+    -d "client_id=my-dashboard-app" \
+    -d "code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+  ```
+
+  | パラメータ | 説明 |
+  |---|---|
+  | `grant_type` | `authorization_code` を指定（固定） |
+  | `code` | Step 2で受け取った認可コード |
+  | `redirect_uri` | Step 1と同一のリダイレクトURI |
+  | `client_id` | クライアントID |
+  | `code_verifier` | PKCE検証値（code_challengeの元となったランダム文字列） |
+
+  ### Step 4: トークンレスポンス
+
+  ```json
+  {
+    "access_token": "eyJhbGciOiJSUzI1NiIs...",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "refresh_token": "eyJhbGciOiJSUzI1NiIs...",
+    "scope": "openid profile devices:read devices:control",
+    "id_token": "eyJhbGciOiJSUzI1NiIs..."
+  }
+  ```
+
+  ## 2. Client Credentials フロー
+
+  システム間連携（M2M）向け。ユーザーの操作を伴わず、
+  アプリケーション自体の認証情報でトークンを取得する。
+
+  ### トークンリクエスト
+
+  ```bash
+  curl -X POST https://auth.example.com/token \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "grant_type=client_credentials" \
+    -d "client_id=lighting-control-system" \
+    -d "client_secret=system-secret-value" \
+    -d "scope=devices:read devices:control"
+  ```
+
+  | パラメータ | 説明 |
+  |---|---|
+  | `grant_type` | `client_credentials` を指定（固定） |
+  | `client_id` | 事前にベンダーから発行されたクライアントID |
+  | `client_secret` | クライアントシークレット |
+  | `scope` | 要求するスコープ（スペース区切り） |
+
+  ### トークンレスポンス
+
+  ```json
+  {
+    "access_token": "eyJhbGciOiJSUzI1NiIs...",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "scope": "devices:read devices:control"
+  }
+  ```
+
+  ※ Client Credentialsフローではrefresh_tokenは発行されない。
+
+  ## 3. Refresh Token フロー
+
+  アクセストークンの有効期限が切れた際に、リフレッシュトークンを使用して新しいアクセストークンを取得する。
+
+  ### トークンリクエスト
+
+  ```bash
+  curl -X POST https://auth.example.com/token \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "grant_type=refresh_token" \
+    -d "refresh_token=eyJhbGciOiJSUzI1NiIs..." \
+    -d "client_id=my-dashboard-app"
+  ```
+
+  ### トークンレスポンス
+
+  ```json
+  {
+    "access_token": "eyJhbGciOiJSUzI1NiIs...(新しいトークン)",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "refresh_token": "eyJhbGciOiJSUzI1NiIs...(新しいリフレッシュトークン)",
+    "scope": "openid profile devices:read devices:control"
+  }
+  ```
+
+  ## 4. Token Revocation（トークン失効）
+
+  発行済みのアクセストークンまたはリフレッシュトークンを失効させる（RFC 7009）。
+  クライアントアプリの不具合によるビル設備の誤制御など、
+  緊急時にアクセス権を即座に取り消すために使用する。
+
+  各ベンダーは、OIDC Discoveryの `revocation_endpoint` でこのエンドポイントのURLを公開すること。
+
+  ### リクエスト
+
+  ```bash
+  curl -X POST https://auth.example.com/revoke \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "token=eyJhbGciOiJSUzI1NiIs..." \
+    -d "token_type_hint=access_token" \
+    -d "client_id=lighting-control-system" \
+    -d "client_secret=system-secret-value"
+  ```
+
+  | パラメータ | 必須 | 説明 |
+  |---|---|---|
+  | `token` | 必須 | 失効させるトークン |
+  | `token_type_hint` | 任意 | トークン種別のヒント（`access_token` または `refresh_token`） |
+  | `client_id` | 必須 | クライアントID |
+  | `client_secret` | 条件付き | Confidentialクライアントの場合に必須 |
+
+  ### レスポンス
+
+  成功時はHTTP 200を返す（レスポンスボディなし）。
+  トークンが既に失効済みまたは無効な場合でも200を返す（RFC 7009準拠）。
+
+  ### ユースケース例
+
+  - クライアントアプリの不具合でビル設備に誤った制御命令が送信されている場合
+  - セキュリティインシデント発生時にすべてのアクティブセッションを強制終了する場合
+  - ユーザーがログアウトする際にリフレッシュトークンを無効化する場合
+
+  ## トークンの提示方法
+
+  取得したアクセストークンを、APIリクエストのAuthorizationヘッダーにBearerトークンとして含める：
+
+  ```
+  Authorization: Bearer <access_token>
+  ```
+
+  ### リクエスト例
+
+  ```bash
+  curl -X GET https://api.example.com/v1/devices/telemetry \
+    -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIs..."
+  ```
+
+  ## スコープ一覧
+
+  ### OIDC標準スコープ
+
+  | スコープ | 説明 |
+  |---|---|
+  | `openid` | OpenID Connect認証を要求（IDトークンの発行） |
+  | `profile` | ユーザーのプロフィール情報へのアクセス |
+
+  ### スマートビル標準スコープ
+
+  | スコープ | 説明 |
+  |---|---|
+  | `digital-twins:read` | デジタルツインの一覧・詳細の参照 |
+  | `digital-twins:write` | デジタルツインのプロパティ更新 |
+  | `devices:read` | デバイステレメトリデータの取得 |
+  | `devices:control` | デバイスへの制御命令の送信 |
+  | `tasks:read` | タスク状態の参照 |
+  | `tasks:write` | タスクの作成・削除 |
+  | `log:read` | 監査ログ・イベントログの参照 |
+
+  ## 推奨クレーム
+
+  アクセストークン（JWT）には、OAuth 2.0 / OIDCの標準クレーム（iss, sub, aud, exp等）に加え、
+  以下のカスタムクレームを含めることを推奨する。
+  これにより、リソースサーバーはトークンのみでビル・デバイス種別レベルのアクセス制御を実現できる。
+
+  | クレーム | 型 | 標準化レベル | 説明 |
+  |---|---|---|---|
+  | `building_ids` | string[] | 推奨 | アクセス可能なビルIDの配列 |
+  | `allowed_device_types` | string[] | 推奨 | 制御可能なデバイス種別の配列（省略時は制限なし） |
+  | `roles` | string[] | 推奨 | ユーザーまたはクライアントの役割 |
+
+  詳細は `RecommendedClaims` スキーマを参照。
+
+  ## 参考仕様
+
+  - [RFC 6749 - OAuth 2.0 Authorization Framework](https://datatracker.ietf.org/doc/html/rfc6749)
+  - [RFC 7009 - OAuth 2.0 Token Revocation](https://datatracker.ietf.org/doc/html/rfc7009)
+  - [RFC 7636 - PKCE](https://datatracker.ietf.org/doc/html/rfc7636)
+  - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+  - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
+
+flows:
+  authorizationCode:
+    authorizationUrl: https://auth.example.com/authorize
+    tokenUrl: https://auth.example.com/token
+    refreshUrl: https://auth.example.com/token
+    scopes:
+      openid: OpenID Connect認証を要求
+      profile: ユーザーのプロフィール情報へのアクセス
+      digital-twins:read: デジタルツインの一覧・詳細の参照
+      digital-twins:write: デジタルツインのプロパティ更新
+      devices:read: デバイステレメトリデータの取得
+      devices:control: デバイスへの制御命令の送信
+      tasks:read: タスク状態の参照
+      tasks:write: タスクの作成・削除
+      log:read: 監査ログ・イベントログの参照
+  clientCredentials:
+    tokenUrl: https://auth.example.com/token
+    scopes:
+      digital-twins:read: デジタルツインの一覧・詳細の参照
+      digital-twins:write: デジタルツインのプロパティ更新
+      devices:read: デバイステレメトリデータの取得
+      devices:control: デバイスへの制御命令の送信
+      tasks:read: タスク状態の参照
+      tasks:write: タスクの作成・削除
+      log:read: 監査ログ・イベントログの参照

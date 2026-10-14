@@ -1,0 +1,86 @@
+post:
+  summary: 即時実行タスク作成
+  description: |
+    データ集計タスクを即座に実行
+
+    リクエストヘッダ:
+    - Idempotency-Key: 冪等性キー（任意）
+
+    Idempotency-Key 利用時のエラー:
+    - 422: 同一キーで異なるリクエスト内容を送信した場合
+    - 409: 同一キーの先行リクエストが処理中の場合
+  operationId: createImmediateTask
+  tags:
+    - Tasks
+  security:
+    - OIDC: []
+  parameters:
+    - $ref: '../../components/parameters/common/idempotency-key.yaml'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/tasks/immediate-task-request.yaml'
+        examples:
+          hourly_single_point:
+            summary: 単一点の1時間集計
+            description: 1つの監視点に対して直近1時間のデータを集計する最小構成の例。リクエストボディでは `siteId` または `buildingId` のどちらか一方の指定が必須です。
+            value:
+              execType: immediate
+              siteId: site-001
+              startDatetime: '2026-05-01T09:00:00Z'
+              endDatetime: '2026-05-01T10:00:00Z'
+              pointIds:
+                - '1234567890'
+          daily_multi_points:
+            summary: 複数監視点の日次集計
+            description: 複数の監視点をまとめて1日分集計する運用想定の例。リクエストボディでは `siteId` または `buildingId` のどちらか一方の指定が必須です。
+            value:
+              execType: immediate
+              buildingId: building-001
+              startDatetime: '2026-05-01T00:00:00Z'
+              endDatetime: '2026-05-01T23:59:59Z'
+              pointIds:
+                - '1234567890'
+                - '1234567891'
+                - '1234567892'
+          weekly_report_source:
+            summary: 週次レポート用の入力データ集計
+            description: 週次レポートの元データ作成を想定した7日間集計の例。リクエストボディでは `siteId` または `buildingId` のどちらか一方の指定が必須です。
+            value:
+              execType: immediate
+              siteId: site-002
+              startDatetime: '2026-04-24T00:00:00Z'
+              endDatetime: '2026-04-30T23:59:59Z'
+              pointIds:
+                - '2234567890'
+                - '2234567891'
+  responses:
+    '201':
+      description: タスク作成・実行開始
+      headers:
+        Request-Id:
+          $ref: '../../components/headers/request-id.yaml'
+        Date:
+          $ref: '../../components/headers/date.yaml'
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/tasks/immediate-task-response.yaml'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '409':
+      $ref: '../../components/responses/409-idempotency-conflict.yaml'
+    '422':
+      $ref: '../../components/responses/422-unprocessable-entity.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

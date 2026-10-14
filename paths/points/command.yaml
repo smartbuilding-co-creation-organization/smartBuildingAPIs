@@ -1,0 +1,88 @@
+post:
+  summary: ポイント制御API
+  operationId: updatePoints
+  tags:
+    - Device Control
+  description: |
+    指定された敷地または建物配下のポイントに対して操作・設定を行います。
+
+    リクエストヘッダ:
+    - Authorization: Bearer トークン情報
+    - Idempotency-Key: 冪等性キー（任意）
+    - Content-Type: application/json
+
+    Idempotency-Key 利用時のエラー:
+    - 422: 同一キーで異なるリクエスト内容を送信した場合
+    - 409: 同一キーの先行リクエストが処理中の場合
+  security:
+    - OIDC: []
+  parameters:
+    - name: siteId
+      in: query
+      required: false
+      description: 対象敷地ID（`buildingId` といずれか一方を指定）
+      schema:
+        type: string
+    - name: buildingId
+      in: query
+      required: false
+      description: 対象建物ID（`siteId` といずれか一方を指定）
+      schema:
+        type: string
+    - $ref: '../../components/parameters/common/idempotency-key.yaml'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - points
+          properties:
+            points:
+              type: array
+              description: 更新対象ポイントの一覧
+              minItems: 1
+              items:
+                type: object
+                required:
+                  - pointId
+                  - value
+                properties:
+                  pointId:
+                    type: string
+                    description: ポイント識別子
+                  value:
+                    description: 設定する値
+        example:
+          points:
+            - pointId: point01
+              value: cool
+            - pointId: point02
+              value: 22
+  responses:
+    '204':
+      description: 正常終了
+      headers:
+        Request-Id:
+          $ref: '../../components/headers/request-id.yaml'
+        Date:
+          $ref: '../../components/headers/date.yaml'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '404':
+      $ref: '../../components/responses/404-not-found.yaml'
+    '409':
+      $ref: '../../components/responses/409-idempotency-conflict.yaml'
+    '422':
+      $ref: '../../components/responses/422-unprocessable-entity.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

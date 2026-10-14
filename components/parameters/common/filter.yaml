@@ -1,0 +1,7 @@
+name: filter
+in: query
+description: 条件検索用フィルター（key=value形式、複数条件はカンマ区切り）
+required: false
+schema:
+  type: string
+example: 'status=active,tags=production'

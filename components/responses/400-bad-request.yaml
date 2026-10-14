@@ -1,0 +1,17 @@
+description: リクエストが不正です
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: BAD_REQUEST
+      message: リクエストパラメータが不正です
+      details:
+        - field: taskName
+          issue: 必須フィールドです
+      timestamp: '2026-04-01T10:30:00Z'

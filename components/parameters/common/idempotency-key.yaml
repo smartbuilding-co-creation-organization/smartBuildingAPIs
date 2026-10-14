@@ -1,0 +1,16 @@
+name: Idempotency-Key
+in: header
+required: false
+description: |
+  冪等性キー。
+  変更系POSTで再送時の二重実行を防止するために使用します。
+
+  サーバー実装要件:
+  - 同一キーかつ同一リクエスト内容の再送時は、重複実行せず同等結果を返す。
+  - 同一キーで異なるリクエスト内容が送信された場合は409を返す。
+  - キーの保持期間は少なくとも24時間とする。
+schema:
+  type: string
+  minLength: 1
+  maxLength: 128
+  example: 018f6f6d-2b8e-7b58-9f66-6f0a6a74d251

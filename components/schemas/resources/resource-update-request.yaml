@@ -1,0 +1,62 @@
+type: object
+required:
+  - buildingId
+properties:
+  buildingId:
+    type: string
+    description: リソースが所属するビルディングID（必須）
+    example: building-a
+  
+  entityName:
+    type: string
+    description: エンティティ名
+    example: Building A - Updated
+  
+  entityClass:
+    type: string
+    description: エンティティクラス
+    enum:
+      - site
+      - building
+      - floor
+      - room
+      - zone
+      - device
+      - sensor
+      - actuator
+      - gateway
+      - system
+    example: building
+  
+  status:
+    type: string
+    enum:
+      - active
+      - inactive
+      - maintenance
+      - archived
+    description: ステータス
+    example: maintenance
+  
+  parentId:
+    type: string
+    description: 親要素のID
+    nullable: true
+    example: site-001
+  
+  customTags:
+    type: array
+    description: カスタムタグリスト
+    items:
+      type: string
+    example:
+      - production
+      - maintenance-scheduled
+  
+  customProperties:
+    type: object
+    description: カスタムプロパティ
+    additionalProperties: true
+    example:
+      maintenance_date: '2024-02-01'
+      notes: Scheduled maintenance

@@ -1,0 +1,7 @@
+name: path
+in: query
+description: "階層構造によるフィルタリング (例: building/floor/room)"
+required: false
+schema:
+  type: string
+  example: building-a/floor-1/room-101

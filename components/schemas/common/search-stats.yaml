@@ -1,0 +1,17 @@
+type: object
+description: 検索結果の統計情報
+properties:
+  includeStats:
+    type: boolean
+    description: 統計情報を含めるか
+    default: false
+    example: true
+  statsFields:
+    type: array
+    description: 統計情報を集計するフィールド
+    items:
+      type: string
+    example:
+      - status
+      - entityClass
+      - tags

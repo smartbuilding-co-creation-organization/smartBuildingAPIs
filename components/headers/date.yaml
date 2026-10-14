@@ -1,0 +1,4 @@
+description: レスポンス生成時刻
+schema:
+  type: string
+  example: Mon, 20 Apr 2026 12:00:00 GMT

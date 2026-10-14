@@ -1,0 +1,6 @@
+description: リクエストは正常に処理されましたが、返すコンテンツはありません
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'

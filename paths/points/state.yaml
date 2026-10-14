@@ -1,0 +1,161 @@
+get:
+  summary: ポイントデータ取得API
+  operationId: listPoints
+  tags:
+    - Device Telemetry
+  description: |
+    指定された敷地または建物配下のポイント一覧と現在状態を取得します。
+
+    リクエストヘッダ:
+    - Authorization: Bearer トークン情報
+  security:
+    - OIDC: []
+  parameters:
+    - name: siteId
+      in: query
+      required: false
+      description: 対象敷地ID（`buildingId` といずれか一方を指定）
+      schema:
+        type: string
+    - name: buildingId
+      in: query
+      required: false
+      description: 対象建物ID（`siteId` といずれか一方を指定）
+      schema:
+        type: string
+    - name: pointId
+      in: query
+      required: false
+      description: ポイントID。複数指定可能で、省略時は全件取得します。
+      schema:
+        type: array
+        items:
+          type: string
+          minLength: 1
+      style: form
+      explode: true
+    - name: pageSize
+      in: query
+      required: false
+      description: 1ページあたりの返却件数。
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    - name: page
+      in: query
+      required: false
+      description: 返却するページ番号。
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+  responses:
+    '200':
+      description: 正常終了
+      headers:
+        Request-Id:
+          $ref: '../../components/headers/request-id.yaml'
+        Date:
+          $ref: '../../components/headers/date.yaml'
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                description: 当該物件配下のポイント一覧。
+                items:
+                  type: object
+                  required:
+                    - pointId
+                    - pointName
+                    - pointType
+                    - pointState
+                  properties:
+                    pointId:
+                      type: string
+                      description: ポイント識別子
+                    pointName:
+                      type: string
+                      description: ポイント名称
+                    pointType:
+                      type: string
+                      description: ポイント種別
+                    pointState:
+                      type: object
+                      description: ポイントの現在状態。
+                      required:
+                        - presentValue
+                        - updatedAt
+                      properties:
+                        presentValue:
+                          description: 現在値
+                        updatedAt:
+                          type: string
+                          format: date-time
+                          description: 更新時刻
+              meta:
+                $ref: '../../components/schemas/common/search-response-meta.yaml'
+          examples:
+            singlePageResult:
+              summary: 1ページで完結する通常取得の例
+              value:
+                data:
+                  - pointId: VRV-1-POINT1
+                    pointName: VRV-1 運転モード
+                    pointType: operationMode
+                    pointState:
+                      presentValue: cool
+                      updatedAt: '2026-04-01T12:00:00Z'
+                  - pointId: VRV-1-POINT2
+                    pointName: VRV-1 室温
+                    pointType: roomTemperature
+                    pointState:
+                      presentValue: 25.5
+                      updatedAt: '2026-04-01T12:00:00Z'
+                meta:
+                  total: 2
+                  page: 1
+                  pageSize: 50
+                  totalPages: 1
+            firstPageWithLimit2:
+              summary: pageSize=2 で1ページ目を取得した例
+              value:
+                data:
+                  - pointId: VRV-1-POINT1
+                    pointName: VRV-1 運転モード
+                    pointType: operationMode
+                    pointState:
+                      presentValue: cool
+                      updatedAt: '2026-04-01T12:00:00Z'
+                  - pointId: VRV-1-POINT2
+                    pointName: VRV-1 室温
+                    pointType: roomTemperature
+                    pointState:
+                      presentValue: 25.5
+                      updatedAt: '2026-04-01T12:00:00Z'
+                meta:
+                  total: 10
+                  page: 1
+                  pageSize: 2
+                  totalPages: 5
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '404':
+      $ref: '../../components/responses/404-not-found.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

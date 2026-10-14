@@ -1,0 +1,8 @@
+type: object
+required:
+  - taskId
+properties:
+  taskId:
+    type: string
+    description: タスクID
+    example: task-001

@@ -1,0 +1,36 @@
+servers:
+  - url: https://auth.example.com
+    description: 認可サーバー（各ベンダーが提供するOIDC準拠の認可サーバー）
+get:
+  summary: OpenID Connect Discovery
+  description: |
+    OpenID Connect Discoveryエンドポイント。
+    各ビルOSベンダーは、認可サーバー上にこのエンドポイントを提供しなければならない（MUST）。
+
+    クライアントアプリケーションは、ビルOSへの接続時にこのエンドポイントを呼び出し、
+    認可エンドポイント・トークンエンドポイント・サポートされるスコープ等の設定情報を自動取得する。
+
+    これにより、異なるベンダーのビルOSに対しても、接続先URLを変更するだけで同一のクライアントが利用可能となる。
+  operationId: getOpenIdConfiguration
+  tags:
+    - Authentication
+  security: []
+  responses:
+    '200':
+      description: OIDC Discovery設定情報
+      headers:
+        Request-Id:
+          $ref: '../../components/headers/request-id.yaml'
+        Date:
+          $ref: '../../components/headers/date.yaml'
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/auth/openid-configuration.yaml'
+          examples:
+            default:
+              $ref: '../../components/examples/auth/openid-configuration-response.yaml'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

@@ -1,0 +1,66 @@
+get:
+  summary: タスク取得
+  description: タスクの実行状況・結果を取得
+  operationId: getTask
+  tags:
+    - Tasks
+  security:
+    - OIDC: []
+  parameters:
+    - $ref: '../../components/parameters/tasks/task-id.yaml'
+  responses:
+    '200':
+      description: タスク情報取得成功
+      headers:
+        Request-Id:
+          $ref: '../../components/headers/request-id.yaml'
+        Date:
+          $ref: '../../components/headers/date.yaml'
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/tasks/task.yaml'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '404':
+      $ref: '../../components/responses/404-not-found.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'
+
+delete:
+  summary: タスク削除
+  description: 登録済みタスクを削除（メタデータ、スケジュール、出力ファイル含む）
+  operationId: deleteTask
+  tags:
+    - Tasks
+  security:
+    - OIDC: []
+  parameters:
+    - $ref: '../../components/parameters/tasks/task-id.yaml'
+  responses:
+    '204':
+      $ref: '../../components/responses/204-no-content.yaml'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '404':
+      $ref: '../../components/responses/404-not-found.yaml'
+    '409':
+      $ref: '../../components/responses/409-conflict.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

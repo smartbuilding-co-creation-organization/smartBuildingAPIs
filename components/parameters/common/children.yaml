@@ -1,0 +1,8 @@
+name: children
+in: query
+description: 子要素を含めるかどうか
+required: false
+schema:
+  type: boolean
+  default: false
+example: true

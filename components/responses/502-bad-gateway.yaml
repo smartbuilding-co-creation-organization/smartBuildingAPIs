@@ -1,0 +1,14 @@
+description: 上流サーバーから無効なレスポンスを受信しました
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: BAD_GATEWAY
+      message: 外部サービスとの通信に失敗しました
+      timestamp: '2024-01-15T10:30:00Z'

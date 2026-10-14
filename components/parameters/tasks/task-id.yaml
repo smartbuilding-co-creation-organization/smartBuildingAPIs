@@ -1,0 +1,9 @@
+name: taskId
+in: path
+required: true
+description: タスクID
+schema:
+  type: string
+  pattern: '^task-[a-zA-Z0-9]+$'
+  # ★ID形式の取り決めが必要。
+example: task-001

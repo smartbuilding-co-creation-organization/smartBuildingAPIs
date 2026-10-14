@@ -1,0 +1,83 @@
+type: object
+description: |
+  アクセストークン（JWT）に含めることを推奨するクレーム。
+
+  OAuth 2.0 / OIDCの登録済みクレーム（iss, sub, aud, exp, iat等）に加え、
+  スマートビル標準APIでは以下のカスタムクレームを推奨する。
+  これらのクレームにより、リソースサーバーはトークンのみで
+  ビル・デバイス種別レベルのアクセス制御を実現できる。
+
+  ## 標準化レベル
+
+  - 登録済みクレーム（iss, sub, aud, exp, scope）: 必須
+  - カスタムクレーム（building_ids, allowed_device_types, roles）: 推奨
+
+  各ベンダーは、推奨クレームに加えて独自のクレームを追加してもよい。
+required:
+  - iss
+  - sub
+  - aud
+  - exp
+  - iat
+  - scope
+properties:
+  iss:
+    type: string
+    format: uri
+    description: トークン発行者（認可サーバーのIssuer Identifier）
+    example: https://auth.example.com
+  sub:
+    type: string
+    description: トークンの主体（ユーザーIDまたはクライアントID）
+    example: user@example.com
+  aud:
+    type: string
+    description: トークンの対象（リソースサーバーの識別子）
+    example: https://api.building-os.example.com
+  exp:
+    type: integer
+    description: トークンの有効期限（UNIXタイムスタンプ）
+    example: 1720000000
+  iat:
+    type: integer
+    description: トークンの発行日時（UNIXタイムスタンプ）
+    example: 1719913600
+  scope:
+    type: string
+    description: |
+      許可されたスコープ（スペース区切り）。
+      スマートビル標準APIで定義されたスコープ名を使用する。
+    example: devices:read devices:control
+  building_ids:
+    type: array
+    description: |
+      アクセス可能なビルIDの配列（推奨）。
+      リソースサーバーはこのクレームを参照し、リクエスト対象のビルへのアクセス権を検証する。
+      空配列の場合はどのビルにもアクセスできないことを示す。
+    items:
+      type: string
+    example:
+      - building-001
+      - building-002
+  allowed_device_types:
+    type: array
+    description: |
+      制御可能なデバイス種別の配列（推奨）。
+      devices:control スコープと組み合わせて使用し、
+      制御対象のデバイス種別を絞り込む。
+      このクレームが省略された場合、デバイス種別による制限はないものとして扱う。
+    items:
+      type: string
+    example:
+      - lighting
+      - hvac
+  roles:
+    type: array
+    description: |
+      ユーザーまたはクライアントの役割（推奨）。
+      各ベンダーが定義する役割名を使用する。
+    items:
+      type: string
+    example:
+      - operator
+      - viewer

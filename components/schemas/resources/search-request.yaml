@@ -1,0 +1,193 @@
+# ============================================
+# リソース検索リクエスト
+# ============================================
+# ResourceSearchRequest: シンプル検索/高度検索のいずれかを受け付けるトップレベルスキーマ
+# ResourceSearchCommonFields: 両検索方式に共通するフィールド
+# ResourceSearchSimpleRequest: シンプル検索（単一フィールド）
+# ResourceSearchFilterRequest: 高度な検索（複数フィールドまたは論理演算）
+# ResourceSearchFilter / ResourceSearchCondition / ResourceSearchLeafCondition: 高度検索の再帰条件
+
+ResourceSearchRequest:
+  oneOf:
+    - $ref: '#/ResourceSearchSimpleRequest'
+    - $ref: '#/ResourceSearchFilterRequest'
+
+ResourceSearchCommonFields:
+  type: object
+  required:
+    - buildingId
+  properties:
+    buildingId:
+      type: string
+      description: 検索対象のビルディングID（必須）
+      example: building-a
+    pagination:
+      $ref: '../common/pagination.yaml'
+    sort:
+      allOf:
+        - $ref: '../common/sort.yaml'
+        - type: object
+          properties:
+            field:
+              enum:
+                - entityName
+                - entityClass
+                - createdAt
+                - updatedAt
+                - status
+              default: createdAt
+    fieldSelection:
+      $ref: '../common/field-selection.yaml'
+    stats:
+      $ref: '../common/search-stats.yaml'
+
+ResourceSearchSimpleRequest:
+  description: シンプル検索（フィールドが1つのみ）
+  allOf:
+    - $ref: '#/ResourceSearchCommonFields'
+    - type: object
+      properties:
+        # フィールド定義（いずれか1つのみ指定可能）
+        path:
+          $ref: '../common/search-request-fields.yaml#/PathField'
+        pathLevel:
+          $ref: '../common/search-request-fields.yaml#/PathLevelField'
+        ids:
+          $ref: '../common/search-request-fields.yaml#/IdsField'
+        entityClass:
+          $ref: '../common/search-request-fields.yaml#/EntityClassField'
+        name:
+          $ref: '../common/search-request-fields.yaml#/NameField'
+        status:
+          $ref: '../common/search-request-fields.yaml#/StatusField'
+        customTags:
+          $ref: '../common/search-request-fields.yaml#/CustomTagsField'
+        customProperty:
+          $ref: '../common/search-request-fields.yaml#/CustomPropertyField'
+        parentIds:
+          $ref: '../common/search-request-fields.yaml#/ParentIdsField'
+        parentExists:
+          $ref: '../common/search-request-fields.yaml#/ParentExistsField'
+        childrenExists:
+          $ref: '../common/search-request-fields.yaml#/ChildrenExistsField'
+        childrenCount:
+          $ref: '../common/search-request-fields.yaml#/ChildrenCountField'
+        created:
+          $ref: '../common/search-request-fields.yaml#/TemporalField'
+        updated:
+          $ref: '../common/search-request-fields.yaml#/TemporalField'
+      # 1つのフィールドのみ指定可能
+      oneOf:
+        - required: [path]
+        - required: [pathLevel]
+        - required: [ids]
+        - required: [entityClass]
+        - required: [name]
+        - required: [status]
+        - required: [customTags]
+        - required: [customProperty]
+        - required: [parentIds]
+        - required: [parentExists]
+        - required: [childrenExists]
+        - required: [childrenCount]
+        - required: [created]
+        - required: [updated]
+
+ResourceSearchFilterRequest:
+  description: 高度な検索（複数フィールドまたは論理演算）
+  allOf:
+    - $ref: '#/ResourceSearchCommonFields'
+    - type: object
+      required:
+        - filter
+      properties:
+        filter:
+          $ref: '#/ResourceSearchFilter'
+
+ResourceSearchFilter:
+  type: object
+  description: フィールド条件を論理演算子で組み合わせるフィルター
+  required:
+    - operator
+    - conditions
+  properties:
+    operator:
+      type: string
+      enum:
+        - AND
+        - OR
+        - NOT
+        - XOR
+      description: |
+        フィールド間の論理演算子
+        - AND: すべての条件を満たす
+        - OR: いずれかの条件を満たす
+        - NOT: 条件を満たさない（conditionsは1つのみ）
+        - XOR: 条件のうち1つだけを満たす
+    conditions:
+      type: array
+      description: フィールド条件のリスト
+      minItems: 1
+      items:
+        $ref: '#/ResourceSearchCondition'
+
+ResourceSearchCondition:
+  oneOf:
+    # 再帰的な論理演算
+    - $ref: '#/ResourceSearchFilter'
+    # 個別フィールド条件
+    - $ref: '#/ResourceSearchLeafCondition'
+
+ResourceSearchLeafCondition:
+  type: object
+  description: 個別フィールド条件
+  required:
+    - field
+  properties:
+    field:
+      type: string
+      description: フィールド名
+      enum:
+        - path
+        - pathLevel
+        - ids
+        - entityClass
+        - name
+        - status
+        - customTags
+        - customProperty
+        - parentIds
+        - parentExists
+        - childrenExists
+        - childrenCount
+        - created
+        - updated
+    # 各フィールドの値（fieldに応じて1つのみ指定）
+    path:
+      $ref: '../common/search-request-fields.yaml#/PathField'
+    pathLevel:
+      $ref: '../common/search-request-fields.yaml#/PathLevelField'
+    ids:
+      $ref: '../common/search-request-fields.yaml#/IdsField'
+    entityClass:
+      $ref: '../common/search-request-fields.yaml#/EntityClassField'
+    name:
+      $ref: '../common/search-request-fields.yaml#/NameField'
+    status:
+      $ref: '../common/search-request-fields.yaml#/StatusField'
+    customTags:
+      $ref: '../common/search-request-fields.yaml#/CustomTagsField'
+    customProperty:
+      $ref: '../common/search-request-fields.yaml#/CustomPropertyField'
+    parentIds:
+      $ref: '../common/search-request-fields.yaml#/ParentIdsField'
+    parentExists:
+      $ref: '../common/search-request-fields.yaml#/ParentExistsField'
+    childrenExists:
+      $ref: '../common/search-request-fields.yaml#/ChildrenExistsField'
+    childrenCount:
+      $ref: '../common/search-request-fields.yaml#/ChildrenCountField'
+    created:
+      $ref: '../common/search-request-fields.yaml#/TemporalField'
+    updated:
+      $ref: '../common/search-request-fields.yaml#/TemporalField'

@@ -1,0 +1,26 @@
+type: object
+description: レスポンスに含めるフィールドの選択（Projection）
+properties:
+  fields:
+    type: array
+    description: |
+      返却するフィールドのリスト。
+      指定しない場合はすべてのフィールドを返却。
+      ネストしたフィールドはドット記法で指定（例: customProperties.location）
+    items:
+      type: string
+    example:
+      - id
+      - entityName
+      - status
+      - customProperties.location
+  excludeFields:
+    type: array
+    description: |
+      除外するフィールドのリスト。
+      fieldsと同時に指定した場合はexcludeFieldsが優先。
+    items:
+      type: string
+    example:
+      - children
+      - customProperties

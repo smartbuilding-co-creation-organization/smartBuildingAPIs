@@ -1,0 +1,452 @@
+post:
+  summary: リソース検索
+  description: 指定されたビルディング内のリソース情報を複雑な条件で検索
+  operationId: searchResources
+  tags:
+    - Resources
+  security:
+    - OIDC: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/resources/search-request.yaml#/ResourceSearchRequest'
+        examples:
+          simple_status:
+            summary: シンプル検索 - ステータスのみ
+            description: |
+              ステータスフィールドのみで検索する最もシンプルな例。
+              building-a内のactiveステータスのエンティティのみを取得します。
+              
+              用途: 特定ビルディング内のシステム稼働中のエンティティ一覧を取得
+            value:
+              buildingId: building-a
+              status:
+                include:
+                  - active
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          simple_customTags_or:
+            summary: シンプル検索 - カスタムタグOR条件
+            description: |
+              カスタムタグOR条件による検索。
+              building-a内で、productionまたはcriticalのいずれかのカスタムタグを含むエンティティを取得します。
+              
+              論理式: production OR critical
+              
+              用途: 特定ビルディング内の本番環境または重要なエンティティを抽出
+              マッチ例:
+              - [production] → ✅
+              - [critical] → ✅
+              - [production, critical] → ✅
+              - [development] → ❌
+            value:
+              buildingId: building-a
+              customTags:
+                operator: OR
+                values:
+                  - production
+                  - critical
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          simple_customTags_and:
+            summary: シンプル検索 - カスタムタグAND条件
+            description: |
+              カスタムタグAND条件による検索。
+              building-a内で、productionとcriticalの両方のカスタムタグを含むエンティティを取得します。
+              
+              論理式: production AND critical
+              
+              用途: 特定ビルディング内の本番環境かつ重要なエンティティのみを抽出
+              マッチ例:
+              - [production, critical] → ✅
+              - [production, critical, other] → ✅
+              - [production] → ❌
+              - [critical] → ❌
+            value:
+              buildingId: building-a
+              customTags:
+                operator: AND
+                values:
+                  - production
+                  - critical
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          simple_customTags_xor:
+            summary: シンプル検索 - カスタムタグXOR条件
+            description: |
+              カスタムタグXOR条件による検索。
+              building-a内で、productionまたはdevelopmentのどちらか一方のみのカスタムタグを含むエンティティを取得します。
+              両方のカスタムタグを持つエンティティは除外されます。
+              
+              論理式: production XOR development
+              
+              用途: 特定ビルディング内で環境が明確に分離されているエンティティを検索
+              マッチ例:
+              - [production] → ✅
+              - [development] → ✅
+              - [production, development] → ❌（両方持つため除外）
+              - [staging] → ❌
+            value:
+              buildingId: building-a
+              customTags:
+                operator: XOR
+                values:
+                  - production
+                  - development
+                mode: any
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          simple_customTags_nor:
+            summary: シンプル検索 - カスタムタグNOR条件
+            description: |
+              カスタムタグNOR条件による検索。
+              building-a内で、archivedもdeletedも含まないエンティティを取得します。
+              
+              論理式: NOT (archived OR deleted) = NOT archived AND NOT deleted
+              
+              用途: 特定ビルディング内のアーカイブ済み・削除済みを除外した有効なエンティティのみを取得
+              マッチ例:
+              - [production] → ✅
+              - [] → ✅（カスタムタグなしもOK）
+              - [archived] → ❌
+              - [deleted] → ❌
+              - [archived, deleted] → ❌
+              - [production, archived] → ❌（archivedを含むため除外）
+            value:
+              buildingId: building-a
+              customTags:
+                operator: NOR
+                values:
+                  - archived
+                  - deleted
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          simple_customTags_nand:
+            summary: シンプル検索 - カスタムタグNAND条件
+            description: |
+              カスタムタグNAND条件による検索。
+              building-a内で、archivedとdeletedの両方を同時に持たないエンティティを取得します。
+              片方だけのカスタムタグを持つエンティティは一致します。
+              
+              論理式: NOT (archived AND deleted) = NOT archived OR NOT deleted
+              
+              用途: 特定ビルディング内で特定の組み合わせのカスタムタグを持つエンティティを除外
+              マッチ例:
+              - [production] → ✅
+              - [archived] → ✅（片方だけならOK）
+              - [deleted] → ✅（片方だけならOK）
+              - [archived, other] → ✅
+              - [archived, deleted] → ❌（両方持つため除外）
+              - [archived, deleted, production] → ❌（両方持つため除外）
+            value:
+              buildingId: building-a
+              customTags:
+                operator: NAND
+                values:
+                  - archived
+                  - deleted
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          advanced_and:
+            summary: 高度な検索 - AND条件
+            description: |
+              複数のフィールド条件をANDで組み合わせた検索。
+              building-a内で、以下のすべての条件を満たすエンティティを取得します：
+              
+              1. floor-1配下（子孫要素を含む）
+              2. エンティティクラスがroomまたはzone
+              3. ステータスがactiveで、archivedではない
+              
+              論理式: (path) AND (room OR zone) AND (active AND NOT archived)
+              
+              用途: 特定ビルディング・フロアのアクティブな部屋・ゾーンのみを取得
+            value:
+              buildingId: building-a
+              filter:
+                operator: AND
+                conditions:
+                  - field: path
+                    path:
+                      value: building-a/floor-1
+                      includeDescendants: true
+                  - field: entityClass
+                    entityClass:
+                      include:
+                        - room
+                        - zone
+                  - field: status
+                    status:
+                      include:
+                        - active
+                      exclude:
+                        - archived
+              pagination:
+                page: 1
+                pageSize: 50
+              sort:
+                field: createdAt
+                order: desc
+          
+          advanced_or:
+            summary: 高度な検索 - OR条件
+            description: |
+              複数のフィールド条件をORで組み合わせた検索。
+              building-a内で、以下のいずれかの条件を満たすエンティティを取得します：
+              
+              1. floor-1配下のすべてのエンティティ
+              2. criticalカスタムタグを持つエンティティ
+              
+              論理式: (path = floor-1) OR (customTags contains critical)
+              
+              用途: 特定ビルディング内の特定フロアまたは重要なエンティティをすべて取得
+            value:
+              buildingId: building-a
+              filter:
+                operator: OR
+                conditions:
+                  - field: path
+                    path:
+                      value: building-a/floor-1
+                  - field: customTags
+                    customTags:
+                      operator: OR
+                      values:
+                        - critical
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          advanced_nested:
+            summary: 高度な検索 - ネスト構造
+            description: |
+              論理演算をネストした複雑な検索。
+              building-a内で、以下の条件を満たすエンティティを取得します：
+              
+              1. floor-1配下（子孫要素を含む）
+              2. かつ、以下のいずれか：
+                 - エンティティクラスがroom
+                 - criticalカスタムタグを持つ
+              
+              論理式: (path = floor-1) AND (room OR critical)
+              
+              用途: 特定ビルディング・フロア内の部屋または重要なエンティティを取得
+            value:
+              buildingId: building-a
+              filter:
+                operator: AND
+                conditions:
+                  - field: path
+                    path:
+                      value: building-a/floor-1
+                      includeDescendants: true
+                  - operator: OR
+                    conditions:
+                      - field: entityClass
+                        entityClass:
+                          include:
+                            - room
+                      - field: customTags
+                        customTags:
+                          operator: OR
+                          values:
+                            - critical
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          advanced_custom_property:
+            summary: 高度な検索 - カスタムプロパティ
+            description: |
+              カスタムプロパティによる検索。
+              building-a内で、以下の条件を満たすエンティティを取得します：
+              
+              1. location = "Tokyo"
+              2. temperature（数値）が20〜30の範囲
+              
+              論理式: (location = "Tokyo") AND (20 <= temperature <= 30)
+              
+              用途: 特定ビルディング内で特定の場所かつ特定の環境条件を満たすエンティティを検索
+              注意: カスタムプロパティは型を明示する必要があります
+            value:
+              buildingId: building-a
+              filter:
+                operator: AND
+                conditions:
+                  - field: customProperty
+                    customProperty:
+                      propertyName: location
+                      type: string
+                      operator: eq
+                      value: Tokyo
+                  - field: customProperty
+                    customProperty:
+                      propertyName: temperature
+                      type: number
+                      operator: between
+                      min: 20
+                      max: 30
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          advanced_complex:
+            summary: 高度な検索 - 複雑な条件
+            description: |
+              複数のフィールドと論理演算を組み合わせた最も複雑な検索例。
+              building-a内で、以下のすべての条件を満たすエンティティを取得します：
+              
+              1. floor-1配下（子孫要素を含む）
+              2. エンティティクラスがroomまたはzone
+              3. ステータスがactiveまたはmaintenanceで、archivedではない
+              4. productionまたはdevelopmentのどちらか一方のみのカスタムタグを持つ
+              5. 2024年に作成された
+              
+              論理式:
+              (path) AND (room OR zone) AND 
+              ((active OR maintenance) AND NOT archived) AND 
+              (production XOR development) AND 
+              (created BETWEEN 2024-01-01 AND 2024-12-31)
+              
+              用途: 特定ビルディング内で特定期間に作成された、稼働中の特定環境のエンティティを抽出
+            value:
+              buildingId: building-a
+              filter:
+                operator: AND
+                conditions:
+                  - field: path
+                    path:
+                      value: building-a/floor-1
+                      includeDescendants: true
+                  - field: entityClass
+                    entityClass:
+                      include:
+                        - room
+                        - zone
+                  - field: status
+                    status:
+                      include:
+                        - active
+                        - maintenance
+                      exclude:
+                        - archived
+                  - field: customTags
+                    customTags:
+                      operator: XOR
+                      values:
+                        - production
+                        - development
+                      mode: any
+                  - field: created
+                    created:
+                      from: '2024-01-01T00:00:00.000Z'
+                      to: '2024-12-31T23:59:59.000Z'
+                      operator: between
+              pagination:
+                page: 1
+                pageSize: 50
+              sort:
+                field: createdAt
+                order: desc
+          
+          advanced_customTags_nand_in_filter:
+            summary: 高度な検索 - カスタムタグNAND条件をフィルタ内で使用
+            description: |
+              フィルタ内でのカスタムタグNAND条件の使用例。
+              building-a内で、以下の条件を満たすエンティティを取得します：
+              
+              1. floor-1配下（子孫要素を含む）
+              2. archivedとdeletedの両方を同時に持たない
+              
+              論理式: (path = floor-1) AND NOT (archived AND deleted)
+              
+              用途: 特定ビルディング・エリア内で、完全に削除状態ではないエンティティを検索
+              片方のカスタムタグのみを持つエンティティは含まれます
+            value:
+              buildingId: building-a
+              filter:
+                operator: AND
+                conditions:
+                  - field: path
+                    path:
+                      value: building-a/floor-1
+                      includeDescendants: true
+                  - field: customTags
+                    customTags:
+                      operator: NAND
+                      values:
+                        - archived
+                        - deleted
+              pagination:
+                page: 1
+                pageSize: 50
+          
+          advanced_customTags_nor_in_filter:
+            summary: 高度な検索 - カスタムタグNOR条件をフィルタ内で使用
+            description: |
+              フィルタ内でのカスタムタグNOR条件の使用例。
+              building-a内で、以下の条件を満たすエンティティを取得します：
+              
+              1. floor-1配下（子孫要素を含む）
+              2. archivedもdeletedも含まない
+              
+              論理式: (path = floor-1) AND NOT (archived OR deleted)
+              
+              用途: 特定ビルディング・エリア内で、有効な（アーカイブされていない）エンティティのみを検索
+              archivedまたはdeletedのいずれかを持つエンティティは除外されます
+            value:
+              buildingId: building-a
+              filter:
+                operator: AND
+                conditions:
+                  - field: path
+                    path:
+                      value: building-a/floor-1
+                      includeDescendants: true
+                  - field: customTags
+                    customTags:
+                      operator: NOR
+                      values:
+                        - archived
+                        - deleted
+              pagination:
+                page: 1
+                pageSize: 50
+  
+  responses:
+    '200':
+      description: 検索成功
+      headers:
+        Request-Id:
+          $ref: '../../components/headers/request-id.yaml'
+        Date:
+          $ref: '../../components/headers/date.yaml'
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/resources/search-response.yaml'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

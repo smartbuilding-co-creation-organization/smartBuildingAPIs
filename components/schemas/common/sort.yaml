@@ -1,0 +1,15 @@
+type: object
+description: ソート設定
+properties:
+  field:
+    type: string
+    description: ソート対象フィールド
+    example: createdAt
+  order:
+    type: string
+    enum:
+      - asc
+      - desc
+    default: desc
+    description: ソート順序
+    example: desc

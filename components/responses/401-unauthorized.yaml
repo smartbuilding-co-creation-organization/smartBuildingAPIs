@@ -1,0 +1,14 @@
+description: 認証が必要です
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: UNAUTHORIZED
+      message: 認証トークンが無効または期限切れです
+      timestamp: '2026-04-01T10:30:00Z'

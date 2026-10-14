@@ -1,0 +1,9 @@
+description: 同一 Idempotency-Key の先行リクエストが処理中のため競合しました
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: IDEMPOTENCY_KEY_IN_PROGRESS
+      message: 同一の Idempotency-Key によるリクエストが処理中です。しばらくしてから再試行してください
+      timestamp: '2026-06-02T10:30:00Z'

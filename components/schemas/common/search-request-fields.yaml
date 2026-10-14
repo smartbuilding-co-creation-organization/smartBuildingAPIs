@@ -1,0 +1,465 @@
+# ============================================
+# 検索フィールド定義
+# ============================================
+
+PathField:
+  type: object
+  description: 階層パスによる位置フィルター
+  required:
+    - value
+  properties:
+    value:
+      type: string
+      description: 階層構造パス
+      example: building-a/floor-1
+    includeDescendants:
+      type: boolean
+      description: 子孫要素を含むか
+      default: false
+      example: true
+
+PathLevelField:
+  type: object
+  description: レベル別位置フィルター
+  properties:
+    building:
+      type: array
+      items:
+        type: string
+      description: ビルディングIDリスト（配列内はOR）
+      example:
+        - building-a
+        - building-b
+    floor:
+      type: array
+      items:
+        type: string
+      description: フロアIDリスト（配列内はOR）
+      example:
+        - floor-1
+        - floor-2
+    room:
+      type: array
+      items:
+        type: string
+      description: ルームIDリスト（配列内はOR）
+      example:
+        - room-101
+    zone:
+      type: array
+      items:
+        type: string
+      description: ゾーンIDリスト（配列内はOR）
+
+IdsField:
+  type: object
+  description: IDリストフィルター
+  required:
+    - values
+  properties:
+    values:
+      type: array
+      items:
+        type: string
+      description: IDリスト（配列内は暗黙のOR）
+      minItems: 1
+      example:
+        - resource-001
+        - resource-002
+
+EntityClassField:
+  type: object
+  description: エンティティクラスフィルター
+  properties:
+    include:
+      type: array
+      items:
+        type: string
+        enum:
+          - site
+          - building
+          - floor
+          - room
+          - zone
+          - device
+          - sensor
+          - actuator
+          - gateway
+          - system
+      description: 含めるクラス（配列内はOR）
+      example:
+        - building
+        - floor
+    exclude:
+      type: array
+      items:
+        type: string
+        enum:
+          - site
+          - building
+          - floor
+          - room
+          - zone
+          - device
+          - sensor
+          - actuator
+          - gateway
+          - system
+      description: 除外するクラス（配列内はOR）
+      example:
+        - device
+
+NameField:
+  type: object
+  description: 名前検索フィルター
+  required:
+    - mode
+    - value
+  properties:
+    mode:
+      type: string
+      enum:
+        - exact
+        - contains
+        - startsWith
+        - endsWith
+      description: 検索モード
+      example: contains
+    value:
+      type: string
+      description: 検索値
+      example: Building
+    caseSensitive:
+      type: boolean
+      description: 大文字小文字を区別するか
+      default: false
+      example: false
+
+StatusField:
+  type: object
+  description: ステータスフィルター
+  properties:
+    include:
+      type: array
+      items:
+        type: string
+        enum:
+          - active
+          - inactive
+          - maintenance
+          - archived
+      description: 含めるステータス（配列内はOR）
+      example:
+        - active
+        - maintenance
+    exclude:
+      type: array
+      items:
+        type: string
+        enum:
+          - active
+          - inactive
+          - maintenance
+          - archived
+      description: 除外するステータス（配列内はOR）
+      example:
+        - archived
+
+CustomTagsField:
+  type: object
+  description: カスタムタグフィルター（演算子指定可能）
+  required:
+    - operator
+    - values
+  properties:
+    operator:
+      type: string
+      enum:
+        - OR
+        - AND
+        - XOR
+        - NOR
+        - NAND
+      description: |
+        カスタムタグ検索の論理演算子
+        
+        - OR: エンティティが指定したカスタムタグのいずれかを含む
+          論理式: A OR B OR C
+          例: values=[production, critical]
+              → productionまたはcriticalを含むエンティティ
+        
+        - AND: エンティティが指定したカスタムタグをすべて含む
+          論理式: A AND B AND C
+          例: values=[production, critical]
+              → productionとcriticalの両方を含むエンティティ
+        
+        - XOR: エンティティが指定したカスタムタグのうち1つだけを含む
+          論理式: A XOR B
+          例: values=[production, development]
+              → productionまたはdevelopmentのどちらか一方のみを含むエンティティ
+        
+        - NOR: エンティティが指定したカスタムタグをいずれも含まない
+          論理式: NOT (A OR B OR C) = NOT A AND NOT B AND NOT C
+          例: values=[archived, deleted]
+              → archivedもdeletedも含まないエンティティ
+        
+        - NAND: エンティティが指定したカスタムタグをすべて同時には含まない
+          論理式: NOT (A AND B AND C) = NOT A OR NOT B OR NOT C
+          例: values=[archived, deleted]
+              → archivedとdeletedの両方を同時に持たないエンティティ
+              （片方だけなら一致）
+      example: OR
+    
+    values:
+      type: array
+      items:
+        type: string
+      description: 検索対象のカスタムタグリスト
+      minItems: 1
+      example:
+        - production
+        - development
+    
+    mode:
+      type: string
+      enum:
+        - any
+        - strict
+      description: |
+        XOR演算子専用のモード
+        - any: 2値XOR（デフォルト、valuesが2つの場合に推奨）
+        - strict: 厳密に1つだけ（valuesが3つ以上の場合に使用）
+        
+        OR/AND/NOR/NAND演算子では無視されます
+      default: any
+      example: any
+
+CustomPropertyField:
+  type: object
+  description: カスタムプロパティフィルター
+  required:
+    - propertyName
+    - type
+    - operator
+  properties:
+    propertyName:
+      type: string
+      description: カスタムプロパティ名
+      example: location
+    type:
+      type: string
+      enum:
+        - string
+        - number
+        - boolean
+      description: 値の型
+      example: string
+    operator:
+      type: string
+      description: |
+        比較演算子（型により異なる）
+        - string: eq, ne, contains, startsWith, endsWith
+        - number: eq, ne, gt, lt, gte, lte, between
+        - boolean: eq, ne
+      example: eq
+    value:
+      oneOf:
+        - type: string
+        - type: number
+        - type: boolean
+      description: 比較値（eq, ne, contains等で使用）
+      example: Tokyo
+    min:
+      type: number
+      description: 最小値（between演算子で使用）
+      example: 20
+    max:
+      type: number
+      description: 最大値（between演算子で使用）
+      example: 30
+
+TemporalField:
+  type: object
+  description: 日時フィルター
+  required:
+    - operator
+  properties:
+    from:
+      type: string
+      format: date-time
+      description: 開始日時
+      example: '2024-01-01T00:00:00Z'
+    to:
+      type: string
+      format: date-time
+      description: 終了日時
+      example: '2024-12-31T23:59:59Z'
+    operator:
+      type: string
+      enum:
+        - between
+        - before
+        - after
+      description: |
+        日時比較演算子
+        - between: fromとtoの間
+        - before: to以前
+        - after: from以降
+      example: between
+
+DeviceIdsField:
+  type: object
+  description: デバイスIDリストフィルター
+  required:
+    - values
+  properties:
+    values:
+      type: array
+      items:
+        type: string
+      description: デバイスIDリスト（配列内は暗黙のOR）
+      minItems: 1
+      example:
+        - device-001
+        - device-002
+
+PointNamesField:
+  type: object
+  description: ポイント名リストフィルター
+  required:
+    - values
+  properties:
+    values:
+      type: array
+      items:
+        type: string
+      description: ポイント名リスト（配列内は暗黙のOR）
+      minItems: 1
+      example:
+        - temperature
+        - humidity
+
+ValueRangeField:
+  type: object
+  description: 値範囲フィルター（テレメトリ用）
+  required:
+    - min
+    - max
+  properties:
+    min:
+      type: number
+      description: 最小値
+      example: 20
+    max:
+      type: number
+      description: 最大値
+      example: 30
+    inclusive:
+      type: boolean
+      description: 境界値を含むか
+      default: true
+      example: true
+
+DataStatusField:
+  type: object
+  description: データステータスフィルター（テレメトリ用）
+  properties:
+    include:
+      type: array
+      items:
+        type: string
+        enum:
+          - normal
+          - warning
+          - error
+          - offline
+      description: 含めるステータス（配列内はOR）
+      example:
+        - normal
+        - warning
+    exclude:
+      type: array
+      items:
+        type: string
+        enum:
+          - normal
+          - warning
+          - error
+          - offline
+      description: 除外するステータス（配列内はOR）
+      example:
+        - error
+        - offline
+
+QualityField:
+  type: object
+  description: データ品質フィルター（テレメトリ用）
+  properties:
+    include:
+      type: array
+      items:
+        type: string
+        enum:
+          - good
+          - uncertain
+          - bad
+      description: 含める品質（配列内はOR）
+      example:
+        - good
+    exclude:
+      type: array
+      items:
+        type: string
+        enum:
+          - good
+          - uncertain
+          - bad
+      description: 除外する品質（配列内はOR）
+      example:
+        - bad
+
+ParentIdsField:
+  type: object
+  description: 親IDフィルター
+  properties:
+    values:
+      type: array
+      items:
+        type: string
+      description: 親IDリスト（配列内はOR）
+      example:
+        - building-a
+        - floor-1
+
+ParentExistsField:
+  type: object
+  description: 親の有無フィルター
+  properties:
+    value:
+      type: boolean
+      description: 親を持つか
+      example: true
+
+ChildrenExistsField:
+  type: object
+  description: 子の有無フィルター
+  properties:
+    value:
+      type: boolean
+      description: 子を持つか
+      example: false
+
+ChildrenCountField:
+  type: object
+  description: 子の数フィルター
+  properties:
+    min:
+      type: integer
+      description: 最小子要素数
+      minimum: 0
+      example: 1
+    max:
+      type: integer
+      description: 最大子要素数
+      minimum: 0
+      example: 10

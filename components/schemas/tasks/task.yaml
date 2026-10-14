@@ -1,0 +1,63 @@
+type: object
+required:
+  - taskId
+  - execType
+  - status
+  - startDatetime
+  - endDatetime
+  - pointIds
+  - createdAt
+properties:
+  taskId:
+    type: string
+    description: タスクID
+    example: task-001
+  execType:
+    type: string
+    enum: [immediate]
+    description: |-
+      タスク実行タイプ
+      - `immediate`: 即時実行
+    example: immediate
+  status:
+    type: string
+    enum: [pending, running, completed, failed]
+    description: |-
+      タスクステータス
+        - pending: 未実行
+        - running: 実行中
+        - completed: 完了
+        - failed: 失敗
+    example: completed
+  startDatetime:
+    type: string
+    format: date-time
+    description: データ集計開始日
+    example: '2026-03-01T00:00:00Z'
+  endDatetime:
+    type: string
+    format: date-time
+    description: データ集計終了日
+    example: '2026-03-31T23:59:59Z'
+  pointIds:
+    type: array
+    description: 収集対象の監視点ID
+    items:
+      type: string
+      description: 監視点ID
+    example:
+      - '1234567890'
+      - '1234567891'
+  fileUri:
+    type: string
+    format: uri
+    description: |- 
+      出力ファイルURL  
+      status=`completed`時のみ返却  
+      ★ダウンロード可否の権限管理が課題
+    example: https://storage.example.com/reports/task-001/report.csv
+  createdAt:
+    type: string
+    format: date-time
+    description: 作成日時
+    example: '2026-04-01T10:30:00Z'

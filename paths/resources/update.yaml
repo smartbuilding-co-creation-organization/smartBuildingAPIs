@@ -1,0 +1,135 @@
+patch:
+  summary: リソース更新
+  description: 指定されたビルディング内のリソース情報を部分更新
+  operationId: updateResource
+  tags:
+    - Resources
+  security:
+    - OIDC: []
+  parameters:
+    - name: resourceId
+      in: path
+      required: true
+      description: リソースID
+      schema:
+        type: string
+        example: resource-001
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/resources/resource-update-request.yaml'
+        examples:
+          update_status:
+            summary: ステータス更新
+            description: |
+              リソースのステータスをメンテナンス中に変更
+              buildingIdは必須パラメータです
+            value:
+              buildingId: building-a
+              status: maintenance
+          
+          update_name_and_tags:
+            summary: 名前とカスタムタグ更新
+            description: |
+              リソースの名前とカスタムタグを更新
+              buildingIdは必須パラメータです
+            value:
+              buildingId: building-a
+              entityName: Building A - Renovated
+              customTags:
+                - production
+                - renovated
+          
+          update_custom_properties:
+            summary: カスタムプロパティ更新
+            description: |
+              カスタムプロパティを追加・更新
+              既存のカスタムプロパティは保持され、指定されたものだけが更新されます
+              buildingIdは必須パラメータです
+            value:
+              buildingId: building-a
+              customProperties:
+                renovation_date: '2024-03-01'
+                notes: Major renovation completed
+                certified: true
+          
+          update_multiple_fields:
+            summary: 複数フィールド同時更新
+            description: |
+              名前、ステータス、カスタムタグ、カスタムプロパティを同時に更新
+              buildingIdは必須パラメータです
+            value:
+              buildingId: building-a
+              entityName: Building A - Maintenance Mode
+              status: maintenance
+              customTags:
+                - production
+                - maintenance-scheduled
+              customProperties:
+                maintenance_start: '2024-05-01T00:00:00Z'
+                maintenance_end: '2024-05-03T23:59:59Z'
+                contact: maintenance-team@example.com
+          
+          update_parent:
+            summary: 親要素変更
+            description: |
+              リソースの親要素を変更（階層構造の移動）
+              buildingIdは必須パラメータです
+            value:
+              buildingId: building-a
+              parentId: floor-2
+  
+  responses:
+    '200':
+      description: 更新成功
+      headers:
+        Request-Id:
+          $ref: '../../components/headers/request-id.yaml'
+        Date:
+          $ref: '../../components/headers/date.yaml'
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/resources/resource.yaml'
+          examples:
+            update_success:
+              summary: 更新成功例
+              value:
+                id: resource-001
+                entityName: Building A - Maintenance Mode
+                entityClass: building
+                buildingId: building-a
+                status: maintenance
+                path: building-a
+                parentId: null
+                customTags:
+                  - production
+                  - maintenance-scheduled
+                customProperties:
+                  location: Tokyo
+                  building_type: Office
+                  floor_count: 10
+                  construction_year: 2020
+                  maintenance_start: '2024-05-01T00:00:00Z'
+                  maintenance_end: '2024-05-03T23:59:59Z'
+                  contact: maintenance-team@example.com
+                createdAt: '2024-03-01T00:00:00.000Z'
+                updatedAt: '2024-05-01T09:15:30.000Z'
+    '400':
+      $ref: '../../components/responses/400-bad-request.yaml'
+    '401':
+      $ref: '../../components/responses/401-unauthorized.yaml'
+    '403':
+      $ref: '../../components/responses/403-forbidden.yaml'
+    '404':
+      $ref: '../../components/responses/404-not-found.yaml'
+    '409':
+      $ref: '../../components/responses/409-conflict.yaml'
+    '429':
+      $ref: '../../components/responses/429-too-many-requests.yaml'
+    '500':
+      $ref: '../../components/responses/500-internal-error.yaml'
+    '503':
+      $ref: '../../components/responses/503-service-unavailable.yaml'

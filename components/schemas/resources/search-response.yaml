@@ -1,0 +1,11 @@
+type: object
+required:
+  - data
+  - meta
+properties:
+  data:
+    type: array
+    items:
+      $ref: './resource.yaml'
+  meta:
+    $ref: '../common/search-response-meta.yaml'

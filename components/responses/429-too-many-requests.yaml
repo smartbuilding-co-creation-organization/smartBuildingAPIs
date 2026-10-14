@@ -1,0 +1,24 @@
+description: レート制限を超過しました
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+  X-RateLimit-Limit:
+    description: レート制限の上限
+    schema:
+      type: integer
+      example: 100
+  Retry-After:
+    description: 再試行可能になるまでの秒数
+    schema:
+      type: integer
+      example: 60
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: RATE_LIMIT_EXCEEDED
+      message: レート制限を超過しました。しばらく待ってから再試行してください
+      timestamp: '2024-01-15T10:30:00Z'

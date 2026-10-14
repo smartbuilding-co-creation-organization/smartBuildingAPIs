@@ -1,0 +1,14 @@
+description: リソースの競合が発生しました
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/common/error.yaml'
+    example:
+      code: CONFLICT
+      message: リソースが既に存在します
+      timestamp: '2024-01-15T10:30:00Z'

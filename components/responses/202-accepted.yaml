@@ -1,0 +1,17 @@
+description: リクエストは受理されましたが、処理は完了していません
+headers:
+  Request-Id:
+    $ref: '../headers/request-id.yaml'
+  Date:
+    $ref: '../headers/date.yaml'
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: リクエストを受理しました
+        status:
+          type: string
+          example: processing

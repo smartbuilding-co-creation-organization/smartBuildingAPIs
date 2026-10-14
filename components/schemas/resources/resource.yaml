@@ -1,0 +1,85 @@
+type: object
+required:
+  - buildingId
+  - id
+  - entityName
+  - entityClass
+  - status
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    description: リソースID
+    example: resource-001
+  entityName:
+    type: string
+    description: エンティティ名
+    example: Building A
+  entityClass:
+    type: string
+    description: エンティティクラス
+    enum:
+      - site
+      - building
+      - floor
+      - room
+      - zone
+      - device
+      - sensor
+      - actuator
+      - gateway
+      - system
+    example: building
+  buildingId:
+    type: string
+    description: 所属建物ID
+    example: building-a
+  status:
+    type: string
+    enum:
+      - active
+      - inactive
+      - maintenance
+      - archived
+    description: ステータス
+    example: active
+  path:
+    type: string
+    description: 階層構造パス
+    example: building-a/floor-1/room-101
+  parentId:
+    type: string
+    description: 親要素のID（ルート要素の場合はnull）
+    nullable: true
+    example: building-a
+  customTags:
+    type: array
+    description: カスタムタグリスト
+    items:
+      type: string
+    example:
+      - production
+      - critical
+  customProperties:
+    type: object
+    description: カスタムプロパティ
+    additionalProperties: true
+    example:
+      location: Tokyo
+      building_type: Office
+  children:
+    type: array
+    description: 子要素のリスト
+    items:
+      $ref: './resource.yaml'
+  createdAt:
+    type: string
+    format: date-time
+    description: 作成日時
+    example: '2024-03-01T00:00:00.000Z'
+  updatedAt:
+    type: string
+    format: date-time
+    description: 更新日時
+    example: '2024-04-01T10:30:00.000Z'
